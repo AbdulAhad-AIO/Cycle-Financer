@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eCommerce Finance Management</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <style>
+        /* Reset basic styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body styling */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+
+        /* Heading styles */
+        h2, h3 {
+            color: #333;
+        }
+
+        /* Form styling */
+        form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: block;
+            color: #555;
+        }
+
+        input, select {
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        input[type="number"] {
+            width: calc(100% - 16px); /* To account for padding */
+        }
+
+        input[readonly] {
+            background-color: #f9f9f9;
+        }
+
+        h3 {
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* Table styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f5f5f5;
+            font-size: 14px;
+        }
+
+        td {
+            font-size: 14px;
+        }
+
+        /* Button styling */
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* File input */
+        input[type="file"] {
+            margin-top: 10px;
+            padding: 8px;
+        }
+
+        /* Total profit display */
+        #totalProfit {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 20px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h2>eCommerce Finance Management</h2>
+
+    <!-- Option 1: Manual Calculation Form -->
+    <form>
+        <label>Order Number: <input type="text" id="orderNumber"></label><br>
+        <label>Order Status: 
+            <select id="orderStatus">
+                <option>Pending</option>
+                <option>Shipped</option>
+                <option>Completed</option>
+            </select>
+        </label><br>
+        <label>Product: <input type="text" id="product"></label><br>
+        <label>Selling Price: <input type="number" id="selling" oninput="calculateFinance()"></label><br>
+        <label>Sourcing Cost: <input type="number" id="sourcing" oninput="calculateFinance()"></label><br>
+        
+        <h3>Calculated Fields</h3>
+        <label>Commission & VAT: <input type="text" id="commissionVAT" readonly></label><br>
+        <label>Payment Fee & VAT: <input type="text" id="paymentFeeVAT" readonly></label><br>
+        <label>Handling Fee & VAT: <input type="text" id="handlingFeeVAT" readonly></label><br>
+        <label>Free Shipping & VAT: <input type="text" id="freeShippingVAT" readonly></label><br>
+        <label>Customer FS VAT: <input type="text" id="customerFSVAT" readonly></label><br>
+        <label>Packaging Cost: <input type="text" id="packagingCost" readonly></label><br>
+        <label>Selling Profit: <input type="text" id="sellingProfit" readonly></label><br>
+    </form>
+
+    <!-- Option 2: Import CSV -->
+    <button onclick="downloadSampleCSV()">Download Sample CSV</button><br><br>
+    <input type="file" accept=".csv" onchange="handleFileUpload(event)">
+    
+    <h3>Finance Data Table</h3>
+    <table id="financeTable"></table>
+    
+    <h3 id="totalProfit">Total Profit: 0.00</h3>
+
+    <script>
+        let totalProfit = 0;
+
+        function calculateFinance(row) {
+            let selling = parseFloat(row.querySelector(".selling").value) || 0;
+            let sourcing = parseFloat(row.querySelector(".sourcing").value) || 0;
+
+            let commissionVAT = selling * 0.10 * 1.15;
+            let paymentFeeVAT = selling * 0.0175 * 1.15;
+            let handlingFeeVAT = selling <= 500 ? 10 : selling <= 1000 ? 15 : selling <= 2000 ? 20 : 60;
+            let freeShippingVAT = 150 * 1.15;
+            let customerFSVAT = 45;
+            let packagingCost = 80;
+
+            let totalCosts = sourcing + commissionVAT + paymentFeeVAT + handlingFeeVAT + freeShippingVAT + customerFSVAT + packagingCost;
+            let sellingProfit = selling - totalCosts;
+
+            row.querySelector(".commissionVAT").value = commissionVAT.toFixed(2);
+            row.querySelector(".paymentFeeVAT").value = paymentFeeVAT.toFixed(2);
+            row.querySelector(".handlingFeeVAT").value = handlingFeeVAT.toFixed(2);
+            row.querySelector(".freeShippingVAT").value = freeShippingVAT.toFixed(2);
+            row.querySelector(".customerFSVAT").value = customerFSVAT.toFixed(2);
+            row.querySelector(".packagingCost").value = packagingCost.toFixed(2);
+            row.querySelector(".sellingProfit").value = sellingProfit.toFixed(2);
+
+            // Update total profit
+            totalProfit += sellingProfit;
+            document.getElementById("totalProfit").innerText = "Total Profit: " + totalProfit.toFixed(2);
+        }
+
+        function downloadSampleCSV() {
+            const headers = ["Order Number", "Order Status", "Product", "Selling Price", "Sourcing Cost", "Commission & VAT", "Payment Fee & VAT", "Handling Fee & VAT", "Free Shipping & VAT", "Customer FS VAT", "Packaging Cost", "Selling Profit"];
+            const sampleData = [
+                ["123", "Pending", "Product A", "200", "50", "", "", "", "", "", "", ""],
+                ["124", "Shipped", "Product B", "300", "80", "", "", "", "", "", "", ""]
+            ];
+
+            let csvData = [headers, ...sampleData];
+
+            // Convert to CSV
+            let csvString = csvData.map(row => row.join(',')).join('\n');
+            let blob = new Blob([csvString], { type: 'text/csv' });
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'sample_finance_data.csv'; // Download the CSV file
+            link.click(); // Trigger download
+        }
+
+        function handleFileUpload(event) {
+            let file = event.target.files[0];
+            if (file && file.name.endsWith(".csv")) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let csvData = e.target.result;
+                    parseCSVData(csvData);
+                };
+                reader.readAsText(file);
+            } else {
+                alert("Please upload a CSV file.");
+            }
+        }
+
+        function parseCSVData(csvData) {
+            let rows = csvData.split('\n');
+            let table = document.getElementById("financeTable");
+            table.innerHTML = ""; // Clear previous data
+
+            // Add table headers
+            let headers = rows[0].split(',');
+            let headerRow = document.createElement("tr");
+            headers.forEach(header => {
+                let th = document.createElement("th");
+                th.innerText = header;
+                headerRow.appendChild(th);
+            });
+            table.appendChild(headerRow);
+
+            // Add rows for each data entry
+            rows.slice(1).forEach(rowData => {
+                let row = document.createElement("tr");
+                let cells = rowData.split(',');
+                row.innerHTML = `
+                    <td><input type="text" value="${cells[0]}" class="orderNumber" readonly></td>
+                    <td><select class="orderStatus"><option>Pending</option><option>Shipped</option><option>Completed</option></select></td>
+                    <td><input type="text" value="${cells[2]}" class="product"></td>
+                    <td><input type="number" value="${cells[3]}" class="selling" oninput="calculateFinance(this.closest('tr'))"></td>
+                    <td><input type="number" value="${cells[4]}" class="sourcing" oninput="calculateFinance(this.closest('tr'))"></td>
+                    <td><input type="text" class="commissionVAT" readonly></td>
+                    <td><input type="text" class="paymentFeeVAT" readonly></td>
+                    <td><input type="text" class="handlingFeeVAT" readonly></td>
+                    <td><input type="text" class="freeShippingVAT" readonly></td>
+                    <td><input type="text" class="customerFSVAT" readonly></td>
+                    <td><input type="text" class="packagingCost" readonly></td>
+                    <td><input type="text" class="sellingProfit" readonly></td>
+                `;
+                table.appendChild(row);
+                calculateFinance(row);
+            });
+        }
+    </script>
+</body>
+</html>
