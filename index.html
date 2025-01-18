@@ -163,7 +163,7 @@
             let sourcing = parseFloat(row.querySelector(".sourcing").value) || 0;
 
             let commissionVAT = selling * 0.10 * 1.15;
-            let paymentFeeVAT = selling * 0.0225 * 0.15;
+            let paymentFeeVAT = selling * 0.0225 * 1.15;
             let handlingFeeVAT = selling <= 500 ? 10 : selling <= 1000 ? 15 : selling <= 2000 ? 20 : 60;
             let freeShippingVAT = 150 * 1.15;
             let customerFSVAT = 45;
